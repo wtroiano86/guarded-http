@@ -1,19 +1,20 @@
 {
+    "$schema": "https://getcomposer.org/schema.json",
     "name": "wtroiano/guarded-http",
     "description": "Policy-controlled Laravel HTTP transport with pinned destinations and bounded responses",
     "type": "library",
     "version": "0.1.0",
     "license": "MIT",
     "require": {
-        "php": "^8.5.0",
         "ext-curl": "*",
+        "ext-mbstring": "*",
         "guzzlehttp/guzzle": "^7.15.5",
         "guzzlehttp/promises": "^2.5.3",
         "guzzlehttp/psr7": "^2.13.1",
         "illuminate/http": "^13.34",
         "illuminate/support": "^13.34",
-        "psr/http-message": "^2.0",
-        "ext-mbstring": "*"
+        "php": "^8.5.0",
+        "psr/http-message": "^2.0"
     },
     "autoload": {
         "psr-4": {
@@ -28,9 +29,10 @@
     "require-dev": {
         "laravel/framework": "^13.34.0",
         "laravel/pint": "^1.32.1",
+        "orchestra/testbench": "^11.3",
         "pestphp/pest": "^5.2.1",
-        "phpstan/phpstan": "^2.2.16",
-        "pestphp/pest-plugin-type-coverage": "^5.0.2"
+        "pestphp/pest-plugin-type-coverage": "^5.0.2",
+        "phpstan/phpstan": "^2.2.16"
     },
     "scripts": {
         "test": "@php vendor/bin/pest",
@@ -39,12 +41,30 @@
         "test:types": "@php vendor/bin/phpstan analyse --memory-limit=1G",
         "test:all": "@test",
         "test:coverage": "@test --coverage",
-        "test:type-coverage": "@test --type-coverage --min=100"
+        "test:type-coverage": "@test --type-coverage --min=100",
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi"
     },
     "config": {
         "allow-plugins": {
             "pestphp/pest-plugin": true
         },
         "sort-packages": true
+    },
+    "keywords": [
+        "laravel",
+        "http",
+        "ssrf"
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Wtroiano\\GuardedHttp\\GuardedHttpServiceProvider"
+            ]
+        }
     }
 }

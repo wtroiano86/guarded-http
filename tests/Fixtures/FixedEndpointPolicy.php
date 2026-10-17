@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Wtroiano\GuardedHttp\Tests;
+namespace Wtroiano\GuardedHttp\Tests\Fixtures;
 
 use Wtroiano\GuardedHttp\EndpointPolicy;
 

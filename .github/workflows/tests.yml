@@ -12,6 +12,7 @@ jobs:
           php-version: '8.5'
           extensions: curl, pdo_sqlite
           tools: composer:v2
+      - run: composer validate --strict --no-check-version
       - run: composer install --no-interaction --prefer-dist
       - run: composer test:lint
       - run: composer test:types
