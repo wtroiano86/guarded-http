@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Wtroiano\GuardedHttp;
+namespace Wtroiano\GuardedHttp\Support;
 
 use GuzzleHttp\Psr7\StreamDecoratorTrait;
 use InvalidArgumentException;

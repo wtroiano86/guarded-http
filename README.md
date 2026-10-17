@@ -8,13 +8,13 @@
 composer require wtroiano/guarded-http:^0.1
 ```
 
-Laravel automatically discovers `GuardedHttpServiceProvider`, which binds `GuardedHttp` as a singleton. Applications that disable package discovery can register that provider in `bootstrap/providers.php`. Inject `GuardedHttp` into your services or resolve it from the container. Policies and limits are explicit per request, so the package needs no published configuration.
+Laravel automatically discovers `Wtroiano\GuardedHttp\Providers\GuardedHttpServiceProvider`, which binds `Services\GuardedHttp` as a singleton. Applications that disable package discovery can register that provider in `bootstrap/providers.php`. Inject `GuardedHttp` into your services or resolve it from the container. Policies and limits are explicit per request, so the package needs no published configuration.
 
 ## Usage
 
 ```php
-use Wtroiano\GuardedHttp\EndpointPolicy;
-use Wtroiano\GuardedHttp\GuardedHttp;
+use Wtroiano\GuardedHttp\Contracts\EndpointPolicy;
+use Wtroiano\GuardedHttp\Services\GuardedHttp;
 
 // The application's policy validates the URL and every resolved address,
 // then returns ['host' => ..., 'port' => ..., 'address' => ...].
@@ -27,19 +27,23 @@ $response = app(GuardedHttp::class)
 
 Implement and bind `EndpointPolicy` in the consuming application. The policy is responsible for trusted endpoint selection, allowed schemes/ports, DNS resolution, and private-address rules. The transport calls it for each request and pins the returned address. A literal IPv6 host is already its own pin. The policy must return the host and port of the supplied URL. Authentication, headers, response interpretation, and protocol-specific behavior remain with the caller.
 
-No automatic retry is introduced. Byte limits apply during transport writes and when reading alternate-handler responses. `BoundedResponseStream` is also available separately. A caller may pass `limitMessage` to retain its own error wording. Treat the returned `PendingRequest` as trusted application code: replacing its handler or middleware is not a security sandbox.
+No automatic retry is introduced. Byte limits apply during transport writes and when reading alternate-handler responses. `Support\BoundedResponseStream` is also available separately. A caller may pass `limitMessage` to retain its own error wording. Treat the returned `PendingRequest` as trusted application code: replacing its handler or middleware is not a security sandbox.
 
 ## Package development
 
 This checkout follows a lightweight Laravel package layout:
 
 ```text
-src/                 Transport, endpoint contract, stream, and service provider
-tests/Feature/       Laravel integration and transport tests
-tests/Unit/          Isolated stream tests
-tests/Fixtures/      Deterministic endpoint policies
-tests/TestCase.php   Orchestra Testbench application
-tests/Pest.php       Pest test bindings
+src/Contracts/             Endpoint policy contract
+src/Providers/             Laravel service provider
+src/Services/              Guarded HTTP transport
+src/Support/               Bounded response stream
+tests/Feature/Providers/   Provider integration tests
+tests/Feature/Services/    Transport behavior tests
+tests/Unit/Support/        Isolated stream tests
+tests/Fixtures/            Deterministic endpoint policies
+tests/TestCase.php         Orchestra Testbench application
+tests/Pest.php             Pest test bindings
 ```
 
 Use a Composer path repository for local development. Run these commands from this checkout:

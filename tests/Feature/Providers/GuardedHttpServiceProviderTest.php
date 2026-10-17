@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Http;
-use Wtroiano\GuardedHttp\GuardedHttp;
-use Wtroiano\GuardedHttp\GuardedHttpServiceProvider;
+use Wtroiano\GuardedHttp\Providers\GuardedHttpServiceProvider;
+use Wtroiano\GuardedHttp\Services\GuardedHttp;
 use Wtroiano\GuardedHttp\Tests\Fixtures\FixedEndpointPolicy;
 
 it('resolves the package transport as a singleton and sends requests through Laravel fakes', function (): void {

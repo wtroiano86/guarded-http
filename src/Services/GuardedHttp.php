@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Wtroiano\GuardedHttp;
+namespace Wtroiano\GuardedHttp\Services;
 
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -13,6 +13,8 @@ use InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
+use Wtroiano\GuardedHttp\Contracts\EndpointPolicy;
+use Wtroiano\GuardedHttp\Support\BoundedResponseStream;
 
 final readonly class GuardedHttp
 {

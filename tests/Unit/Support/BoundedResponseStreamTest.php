@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use GuzzleHttp\Psr7\Utils;
-use Wtroiano\GuardedHttp\BoundedResponseStream;
+use Wtroiano\GuardedHttp\Support\BoundedResponseStream;
 
 it('counts bytes across writes and prevents seeking from resetting the budget', function (): void {
     $stream = new BoundedResponseStream(Utils::streamFor(''), 4, 'Body too large.');

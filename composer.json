@@ -63,7 +63,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Wtroiano\\GuardedHttp\\GuardedHttpServiceProvider"
+                "Wtroiano\\GuardedHttp\\Providers\\GuardedHttpServiceProvider"
             ]
         }
     }

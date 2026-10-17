@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Wtroiano\GuardedHttp\Tests\Fixtures;
 
-use Wtroiano\GuardedHttp\EndpointPolicy;
+use Wtroiano\GuardedHttp\Contracts\EndpointPolicy;
 
 final class FixedEndpointPolicy implements EndpointPolicy
 {

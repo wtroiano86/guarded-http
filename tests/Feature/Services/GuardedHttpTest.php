@@ -10,8 +10,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
-use Wtroiano\GuardedHttp\EndpointPolicy;
-use Wtroiano\GuardedHttp\GuardedHttp;
+use Wtroiano\GuardedHttp\Contracts\EndpointPolicy;
+use Wtroiano\GuardedHttp\Services\GuardedHttp;
 use Wtroiano\GuardedHttp\Tests\Fixtures\FixedEndpointPolicy;
 
 it('pins each validated destination and enforces transport options before dispatch', function (string $url, string $address, array $pins): void {

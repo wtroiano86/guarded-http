@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Wtroiano\GuardedHttp;
+namespace Wtroiano\GuardedHttp\Contracts;
 
 interface EndpointPolicy
 {

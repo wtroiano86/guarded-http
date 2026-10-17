@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Wtroiano\GuardedHttp\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
-use Wtroiano\GuardedHttp\GuardedHttpServiceProvider;
+use Wtroiano\GuardedHttp\Providers\GuardedHttpServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
