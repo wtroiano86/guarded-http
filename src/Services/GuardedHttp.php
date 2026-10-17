@@ -20,9 +20,7 @@ final readonly class GuardedHttp
 {
     public function request(EndpointPolicy $policy, int $maximum, float $timeout = 30, float $connectTimeout = 5, string $limitMessage = 'HTTP response exceeds the byte limit.'): PendingRequest
     {
-        if ($maximum < 1 || ! is_finite($timeout) || $timeout <= 0 || ! is_finite($connectTimeout) || $connectTimeout <= 0) {
-            throw new InvalidArgumentException('Response limits and HTTP timeouts must be positive and finite.');
-        }
+        throw_if($maximum < 1 || ! is_finite($timeout) || $timeout <= 0 || ! is_finite($connectTimeout) || $connectTimeout <= 0, InvalidArgumentException::class, 'Response limits and HTTP timeouts must be positive and finite.');
 
         return Http::timeout($timeout)->connectTimeout(min($connectTimeout, $timeout))
             ->withOptions(['allow_redirects' => false, 'stream' => false, 'proxy' => ''])
@@ -32,9 +30,7 @@ final readonly class GuardedHttp
                     $destination = $policy->resolve((string) $request->getUri());
                     $address = str_contains($destination['address'], ':') ? '['.$destination['address'].']' : $destination['address'];
                     $curl = $options['curl'] ?? [];
-                    if (! is_array($curl)) {
-                        throw new RuntimeException('Invalid HTTP options.');
-                    }
+                    throw_unless(is_array($curl), RuntimeException::class, 'Invalid HTTP options.');
 
                     $curl[CURLOPT_RESOLVE] = str_contains($destination['host'], ':') ? [] : [$destination['host'].':'.$destination['port'].':'.$address];
                     $curl[CURLOPT_PROTOCOLS] = CURLPROTO_HTTP | CURLPROTO_HTTPS;
@@ -43,21 +39,15 @@ final readonly class GuardedHttp
                     $options['proxy'] = '';
                     $options['stream'] = false;
                     $stream = fopen('php://temp/maxmemory:1048576', 'w+');
-                    if ($stream === false) {
-                        throw new RuntimeException('Unable to create the HTTP response buffer.');
-                    }
+                    throw_if($stream === false, RuntimeException::class, 'Unable to create the HTTP response buffer.');
 
                     $options['sink'] = new BoundedResponseStream(Utils::streamFor($stream), $maximum, $limitMessage);
                     $options['on_headers'] = static function (ResponseInterface $response) use ($maximum, $limitMessage): void {
-                        if ((int) $response->getHeaderLine('Content-Length') > $maximum) {
-                            throw new RuntimeException($limitMessage);
-                        }
+                        throw_if((int) $response->getHeaderLine('Content-Length') > $maximum, RuntimeException::class, $limitMessage);
                     };
 
                     $promise = $handler($request, $options);
-                    if (! $promise instanceof PromiseInterface) {
-                        throw new RuntimeException('Invalid HTTP handler.');
-                    }
+                    throw_unless($promise instanceof PromiseInterface, RuntimeException::class, 'Invalid HTTP handler.');
 
                     return $promise->then(static function (ResponseInterface $response) use ($maximum, $limitMessage): ResponseInterface {
                         $body = $response->getBody();

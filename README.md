@@ -51,9 +51,11 @@ Use a Composer path repository for local development. Run these commands from th
 ```bash
 composer install
 composer test
-composer test:types
-composer test:type-coverage
-composer test:lint
+
+# Run a focused test without the complete quality gate:
+composer test:unit -- --filter="test description"
 ```
 
-Composer prepares Testbench's package discovery after autoload generation. Feature tests boot a Laravel application through Testbench 11 and use deterministic HTTP fakes/handlers without connecting to remote services. Unit tests run without booting Laravel. CI runs these same checks. The package requires no Helm workbench; Testbench and the full framework are development dependencies only.
+Composer prepares Testbench's package discovery after autoload generation. Feature tests boot a Laravel application through Testbench 11 and use deterministic HTTP fakes/handlers without connecting to remote services. Unit tests run without booting Laravel. Both the independent package CI and the starter library matrix run the complete quality gate. The package requires no Helm workbench; Testbench and the full framework are development dependencies only.
+
+`composer test` enforces Pint and Rector, PHPStan at `max` with Larastan, Carbon, and bleeding-edge rules, 100% type coverage, architecture rules, and exactly 100% line coverage across all `src` files. Coverage requires PCOV or Xdebug in coverage mode; CI installs PCOV. `composer lint` applies the PHP formatting and refactoring rules. Individual checks remain available as `test:lint`, `test:types`, `test:type-coverage`, and `test:coverage`.

@@ -10,11 +10,11 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: curl, pdo_sqlite
+          extensions: curl, mbstring, pdo_sqlite
+          coverage: pcov
+          ini-values: zend.assertions=1
           tools: composer:v2
       - run: composer validate --strict --no-check-version
       - run: composer install --no-interaction --prefer-dist
-      - run: composer test:lint
-      - run: composer test:types
-      - run: composer test:type-coverage
-      - run: composer test
+      - name: Enforce lint, static analysis, types, and exact line coverage
+        run: composer test

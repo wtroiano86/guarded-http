@@ -19,9 +19,7 @@ final class BoundedResponseStream implements StreamInterface
 
     public function __construct(StreamInterface $stream, private readonly int $maximum, private readonly string $limitMessage = 'HTTP response exceeds the byte limit.')
     {
-        if ($maximum < 1) {
-            throw new InvalidArgumentException('The response byte limit must be positive.');
-        }
+        throw_if($maximum < 1, InvalidArgumentException::class, 'The response byte limit must be positive.');
 
         $this->stream = $stream;
     }

@@ -7,3 +7,5 @@
 /phpstan.neon export-ignore
 /pint.json export-ignore
 /composer.lock export-ignore
+/rector.php export-ignore
+/tmp export-ignore

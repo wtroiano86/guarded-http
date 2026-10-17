@@ -12,8 +12,8 @@ it('resolves the package transport as a singleton and sends requests through Lar
     Http::fake(['https://service.test/data' => Http::response('safe')]);
 
     expect(app()->bound(GuardedHttp::class))->toBeTrue();
-    $transport = app(GuardedHttp::class);
-    expect($transport)->toBe(app(GuardedHttp::class));
+    $transport = resolve(GuardedHttp::class);
+    expect($transport)->toBe(resolve(GuardedHttp::class));
     expect($transport->request(new FixedEndpointPolicy, 4)->get('https://service.test/data')->body())->toBe('safe');
     Http::assertSentCount(1);
 });
@@ -24,5 +24,5 @@ it('preserves a transport supplied by the host application', function (): void {
 
     app()->register(GuardedHttpServiceProvider::class, force: true);
 
-    expect(app(GuardedHttp::class))->toBe($transport);
+    expect(resolve(GuardedHttp::class))->toBe($transport);
 });

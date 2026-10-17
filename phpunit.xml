@@ -5,9 +5,11 @@
          colors="true"
          cacheDirectory=".phpunit.cache">
     <testsuites>
+        <testsuite name="Architecture"><file>tests/ArchitectureTest.php</file></testsuite>
         <testsuite name="Unit"><directory>tests/Unit</directory></testsuite>
         <testsuite name="Feature"><directory>tests/Feature</directory></testsuite>
     </testsuites>
+    <coverage includeUncoveredFiles="true"/>
     <source><include><directory>src</directory></include></source>
     <php>
         <env name="APP_ENV" value="testing"/>

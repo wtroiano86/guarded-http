@@ -17,7 +17,7 @@ use Wtroiano\GuardedHttp\Tests\Fixtures\FixedEndpointPolicy;
 it('pins each validated destination and enforces transport options before dispatch', function (string $url, string $address, array $pins): void {
     $policy = new FixedEndpointPolicy($address);
     $seen = null;
-    $request = app(GuardedHttp::class)->request($policy, 4, timeout: 8, connectTimeout: 2)
+    $request = resolve(GuardedHttp::class)->request($policy, 4, timeout: 8, connectTimeout: 2)
         ->withOptions(['allow_redirects' => true, 'proxy' => 'http://untrusted.test', 'stream' => true])
         ->setHandler(function (RequestInterface $request, array $options) use (&$seen): FulfilledPromise {
             $seen = $options;
@@ -48,7 +48,7 @@ it('rejects a denied endpoint before sending or retrying a write', function (): 
             throw new RuntimeException('Destination denied.');
         }
     };
-    $request = app(GuardedHttp::class)->request($policy, 4)->setHandler(function () use (&$sent): FulfilledPromise {
+    $request = resolve(GuardedHttp::class)->request($policy, 4)->setHandler(function () use (&$sent): FulfilledPromise {
         $sent++;
 
         return new FulfilledPromise(new Response(200));
@@ -63,12 +63,12 @@ it('does not repeat a write after a transport timeout', function (): void {
     Http::fake(['https://service.test/effect' => Http::failedConnection()]);
     $policy = new FixedEndpointPolicy;
 
-    expect(fn () => app(GuardedHttp::class)->request($policy, 4)->post('https://service.test/effect'))->toThrow(ConnectionException::class);
+    expect(fn () => resolve(GuardedHttp::class)->request($policy, 4)->post('https://service.test/effect'))->toThrow(ConnectionException::class);
     expect($policy->requests)->toBe(['https://service.test/effect']);
 });
 
 it('rejects oversized declared responses before downloading the body', function (): void {
-    $request = app(GuardedHttp::class)->request(new FixedEndpointPolicy, 4, limitMessage: 'Too large.')
+    $request = resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4, limitMessage: 'Too large.')
         ->setHandler(function (RequestInterface $request, array $options): FulfilledPromise {
             $response = new Response(200, ['Content-Length' => '5']);
             $options['on_headers']($response);
@@ -83,12 +83,12 @@ it('returns redirects without following them', function (): void {
     Http::preventStrayRequests();
     Http::fake(['https://service.test/data' => Http::response('', 302, ['Location' => 'https://other.test/data'])]);
 
-    expect(app(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)->get('https://service.test/data')->status())->toBe(302);
+    expect(resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)->get('https://service.test/data')->status())->toBe(302);
     Http::assertSentCount(1);
 });
 
 it('bounds bytes during transport writes without a declared content length', function (): void {
-    $request = app(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
+    $request = resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
         ->setHandler(function (RequestInterface $request, array $options): FulfilledPromise {
             $options['sink']->write('123');
             $options['sink']->write('45');
@@ -100,7 +100,7 @@ it('bounds bytes during transport writes without a declared content length', fun
 });
 
 it('bounds responses from alternate handlers that bypass the transport sink', function (): void {
-    $request = app(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
+    $request = resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
         ->setHandler(fn (): FulfilledPromise => new FulfilledPromise(new Response(200, [], '12345')));
 
     expect(fn () => $request->get('https://service.test/data'))->toThrow(RuntimeException::class, 'byte limit');
@@ -118,7 +118,7 @@ it('reads complete responses when a stream returns short chunks', function (): v
             return $this->stream->read(min(1, $length));
         }
     };
-    $request = app(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
+    $request = resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
         ->setHandler(fn (): FulfilledPromise => new FulfilledPromise(new Response(200, [], $body)));
 
     expect($request->get('https://service.test/data')->body())->toBe('1234');
@@ -128,10 +128,61 @@ it('preserves Laravel HTTP fakes and caller headers with any positive sufficient
     Http::preventStrayRequests();
     Http::fake(['https://service.test/data' => Http::response('safe')]);
 
-    expect(app(GuardedHttp::class)->request(new FixedEndpointPolicy, $maximum)->withToken('test-token')->get('https://service.test/data')->body())->toBe('safe');
+    expect(resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, $maximum)->withToken('test-token')->get('https://service.test/data')->body())->toBe('safe');
     Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer test-token'));
 })->with([4, PHP_INT_MAX]);
 
 it('rejects invalid limits before creating a request', function (int $maximum, float $timeout, float $connectTimeout): void {
-    expect(fn () => app(GuardedHttp::class)->request(new FixedEndpointPolicy, $maximum, $timeout, $connectTimeout))->toThrow(InvalidArgumentException::class);
+    expect(fn () => resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, $maximum, $timeout, $connectTimeout))->toThrow(InvalidArgumentException::class);
 })->with([[0, 1, 1], [1, 0, 1], [1, 1, 0], [1, INF, 1], [1, 1, NAN]]);
+
+it('rejects malformed curl options before dispatch', function (): void {
+    $sent = false;
+    $request = resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
+        ->withOptions(['curl' => 'invalid'])
+        ->setHandler(function () use (&$sent): FulfilledPromise {
+            $sent = true;
+
+            return new FulfilledPromise(new Response(200));
+        });
+
+    expect(fn () => $request->get('https://service.test/data'))->toThrow(RuntimeException::class, 'Invalid HTTP options.');
+    expect($sent)->toBeFalse();
+});
+
+it('rejects handlers that do not return a promise', function (): void {
+    $request = resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
+        ->withMiddleware(fn (callable $handler): callable => fn (): Response => new Response(200));
+
+    expect(fn () => $request->get('https://service.test/data'))->toThrow(RuntimeException::class, 'Invalid HTTP handler.');
+});
+
+it('fails before dispatch when the response buffer cannot be opened', function (): void {
+    $sent = false;
+    $policy = new class implements EndpointPolicy
+    {
+        public function resolve(string $url): array
+        {
+            stream_wrapper_unregister('php');
+
+            return (new FixedEndpointPolicy)->resolve($url);
+        }
+    };
+    $request = resolve(GuardedHttp::class)->request($policy, 4)
+        ->setHandler(function () use (&$sent): FulfilledPromise {
+            $sent = true;
+
+            return new FulfilledPromise(new Response(200));
+        });
+
+    set_error_handler(static fn (int $severity, string $message): bool => str_contains($message, 'fopen('));
+
+    try {
+        expect(fn () => $request->get('https://service.test/data'))->toThrow(RuntimeException::class, 'Unable to create the HTTP response buffer.');
+    } finally {
+        stream_wrapper_restore('php');
+        restore_error_handler();
+    }
+
+    expect($sent)->toBeFalse();
+});

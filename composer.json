@@ -27,27 +27,43 @@
         }
     },
     "require-dev": {
+        "driftingly/rector-laravel": "^2.6.2",
+        "larastan/larastan": "^3.12.2",
         "laravel/framework": "^13.34.0",
         "laravel/pint": "^1.32.1",
         "orchestra/testbench": "^11.3",
         "pestphp/pest": "^5.2.1",
         "pestphp/pest-plugin-type-coverage": "^5.0.2",
-        "phpstan/phpstan": "^2.2.16"
+        "phpstan/phpstan": "^2.2.16",
+        "rector/rector": "^2.6.7"
     },
     "scripts": {
-        "test": "@php vendor/bin/pest",
-        "lint": "@php vendor/bin/pint",
-        "test:lint": "@php vendor/bin/pint --test",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "@test:lint @no_additional_args",
+            "@test:types @no_additional_args",
+            "@test:type-coverage @no_additional_args",
+            "@test:coverage"
+        ],
+        "lint": [
+            "@php vendor/bin/rector process",
+            "@php vendor/bin/pint"
+        ],
+        "test:lint": [
+            "@php vendor/bin/pint --test",
+            "@php vendor/bin/rector process --dry-run"
+        ],
         "test:types": "@php vendor/bin/phpstan analyse --memory-limit=1G",
         "test:all": "@test",
-        "test:coverage": "@test --coverage",
-        "test:type-coverage": "@test --type-coverage --min=100",
+        "test:coverage": "@test:unit --coverage --exactly=100.0",
+        "test:type-coverage": "@test:unit --type-coverage --min=100",
         "post-autoload-dump": [
             "@clear",
             "@prepare"
         ],
         "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
-        "prepare": "@php vendor/bin/testbench package:discover --ansi"
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "test:unit": "@php vendor/bin/pest"
     },
     "config": {
         "allow-plugins": {

@@ -9,12 +9,13 @@ it('counts bytes across writes and prevents seeking from resetting the budget', 
     $stream = new BoundedResponseStream(Utils::streamFor(''), 4, 'Body too large.');
     expect($stream->write('é'))->toBe(2);
     expect($stream->write('12'))->toBe(2);
+
     $stream->rewind();
     expect($stream->getContents())->toBe('é12');
     $stream->rewind();
-    expect(fn () => $stream->write('x'))->toThrow(RuntimeException::class, 'Body too large.');
+    expect(fn (): int => $stream->write('x'))->toThrow(RuntimeException::class, 'Body too large.');
 });
 
 it('rejects a nonpositive byte budget', function (): void {
-    expect(fn () => new BoundedResponseStream(Utils::streamFor(''), 0))->toThrow(InvalidArgumentException::class);
+    expect(fn (): BoundedResponseStream => new BoundedResponseStream(Utils::streamFor(''), 0))->toThrow(InvalidArgumentException::class);
 });
