@@ -1,0 +1,19 @@
+name: Package CI
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: curl, pdo_sqlite
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer test:lint
+      - run: composer test:types
+      - run: composer test:type-coverage
+      - run: composer test
