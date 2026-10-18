@@ -8,7 +8,7 @@
 | Laravel components | 13.34 or later within 13.x |
 | PHP extensions | cURL and mbstring |
 
-The initial public release targets `v0.1.0`. See the [changelog](CHANGELOG.md) for release notes. Patch releases in the 0.1.x series preserve the documented public API; breaking changes use a new minor version.
+The initial public release is `v0.1.0`. See the [changelog](CHANGELOG.md) for release notes. Patch releases in the 0.1.x series preserve the documented public API; breaking changes use a new minor version.
 
 ## Why use this package?
 
