@@ -4,7 +4,12 @@ permissions:
   contents: read
 jobs:
   quality:
+    name: PHP 8.5 / ${{ matrix.dependencies }} dependencies
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dependencies: [lowest, latest]
     steps:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
@@ -14,7 +19,33 @@ jobs:
           coverage: pcov
           ini-values: zend.assertions=1
           tools: composer:v2
-      - run: composer validate --strict --no-check-version
-      - run: composer install --no-interaction --prefer-dist
+      - run: composer validate --strict
+      - name: Install latest supported dependencies
+        if: matrix.dependencies == 'latest'
+        run: composer update --no-interaction --prefer-dist --prefer-stable
+      - name: Install lowest supported dependencies
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-interaction --prefer-dist --prefer-stable --prefer-lowest
+      - name: Audit runtime dependencies
+        run: composer audit --locked --no-dev
       - name: Enforce lint, static analysis, types, and exact line coverage
+        if: matrix.dependencies == 'latest'
         run: composer test
+      - name: Verify minimum-version behavior and coverage
+        if: matrix.dependencies == 'lowest'
+        run: |
+          composer test:type-coverage
+          composer test:coverage
+  distribution:
+    name: Install release archive in a clean Laravel application
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: curl, mbstring, zip
+          coverage: none
+          tools: composer:v2
+      - run: composer test:distribution

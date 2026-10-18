@@ -61,13 +61,14 @@
     "exclude": [
         "vendor",
         "node_modules",
+        "tmp",
+        "temp",
         "workbench/vendor",
         "workbench/node_modules",
         "workbench/storage",
         "workbench/bootstrap/cache",
         "workbench/bootstrap/ssr",
         "workbench/public/build",
-        "workbench/.helm",
         "resources/stubs"
     ]
 }

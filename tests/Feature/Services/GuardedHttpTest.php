@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use GuzzleHttp\Promise\FulfilledPromise;
+use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\StreamDecoratorTrait;
 use GuzzleHttp\Psr7\Utils;
@@ -18,7 +19,7 @@ it('pins each validated destination and enforces transport options before dispat
     $policy = new FixedEndpointPolicy($address);
     $seen = null;
     $request = resolve(GuardedHttp::class)->request($policy, 4, timeout: 8, connectTimeout: 2)
-        ->withOptions(['allow_redirects' => true, 'proxy' => 'http://untrusted.test', 'stream' => true])
+        ->withOptions(['proxy' => 'http://untrusted.test', 'stream' => true, 'curl' => [CURLOPT_FRESH_CONNECT => false, CURLOPT_FORBID_REUSE => false, CURLOPT_FOLLOWLOCATION => true]])
         ->setHandler(function (RequestInterface $request, array $options) use (&$seen): FulfilledPromise {
             $seen = $options;
             $options['sink']->write('safe');
@@ -32,6 +33,9 @@ it('pins each validated destination and enforces transport options before dispat
     expect($seen)->toMatchArray(['allow_redirects' => false, 'proxy' => '', 'stream' => false, 'timeout' => 8.0, 'connect_timeout' => 2.0]);
     expect($seen['curl'][CURLOPT_RESOLVE])->toBe($pins);
     expect($seen['curl'][CURLOPT_PROTOCOLS])->toBe(CURLPROTO_HTTP | CURLPROTO_HTTPS);
+    expect($seen['curl'][CURLOPT_FRESH_CONNECT])->toBeTrue();
+    expect($seen['curl'][CURLOPT_FORBID_REUSE])->toBeTrue();
+    expect($seen['curl'][CURLOPT_FOLLOWLOCATION])->toBeFalse();
 })->with([
     'hostname' => ['https://service.test/data', '93.184.216.34', ['service.test:443:93.184.216.34']],
     'IPv4' => ['https://93.184.216.34/data', '93.184.216.34', ['93.184.216.34:443:93.184.216.34']],
@@ -65,6 +69,14 @@ it('does not repeat a write after a transport timeout', function (): void {
 
     expect(fn () => resolve(GuardedHttp::class)->request($policy, 4)->post('https://service.test/effect'))->toThrow(ConnectionException::class);
     expect($policy->requests)->toBe(['https://service.test/effect']);
+});
+
+it('preserves transport failures unrelated to the response byte limit', function (): void {
+    $failure = new RuntimeException('Connection lost.');
+    $request = resolve(GuardedHttp::class)->request(new FixedEndpointPolicy, 4)
+        ->setHandler(fn (): RejectedPromise => new RejectedPromise($failure));
+
+    expect(fn () => $request->get('https://service.test/data'))->toThrow(RuntimeException::class, 'Connection lost.');
 });
 
 it('rejects oversized declared responses before downloading the body', function (): void {

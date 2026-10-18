@@ -3,8 +3,19 @@
     "name": "wtroiano/guarded-http",
     "description": "Policy-controlled Laravel HTTP transport with pinned destinations and bounded responses",
     "type": "library",
-    "version": "0.1.0",
+    "homepage": "https://github.com/wtroiano86/guarded-http",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "William Troiano",
+            "email": "opensource.troiano86@pm.me"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/wtroiano86/guarded-http/issues",
+        "source": "https://github.com/wtroiano86/guarded-http",
+        "security": "https://github.com/wtroiano86/guarded-http/security/policy"
+    },
     "require": {
         "ext-curl": "*",
         "ext-mbstring": "*",
@@ -54,6 +65,7 @@
             "@php vendor/bin/rector process --dry-run"
         ],
         "test:types": "@php vendor/bin/phpstan analyse --memory-limit=1G",
+        "test:distribution": "sh .github/scripts/test-distribution.sh",
         "test:all": "@test",
         "test:coverage": "@test:unit --coverage --exactly=100.0",
         "test:type-coverage": "@test:unit --type-coverage --min=100",
